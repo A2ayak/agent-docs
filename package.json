@@ -1,0 +1,32 @@
+{
+  "name": "agent-docs-cli",
+  "version": "0.2.0",
+  "description": "在现有项目中安装 AGENTS.md 和开发规范模板",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/A2ayak/agent-docs.git"
+  },
+  "homepage": "https://github.com/A2ayak/agent-docs#readme",
+  "bugs": {
+    "url": "https://github.com/A2ayak/agent-docs/issues"
+  },
+  "type": "module",
+  "bin": {
+    "agent-docs": "bin/agent-docs.mjs"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "templates/"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "prepublishOnly": "npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  }
+}
