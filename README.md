@@ -74,6 +74,7 @@ CLI 会逐个标明新增、跳过或覆盖的文件。已有文件默认跳过�
 
 ```powershell
 npm run release
+# 使用 pnpm 时也可运行：pnpm run release
 ```
 
 `npm run release` 依次执行：

@@ -7,13 +7,14 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const npmCli = process.env.npm_execpath;
+const npmRegistry = 'https://registry.npmjs.org/';
 
-function run(command, args, { capture = false } = {}) {
+function run(command, args, { capture = false, shell = false } = {}) {
   const result = spawnSync(command, args, {
     cwd: root,
     encoding: 'utf8',
     stdio: capture ? ['ignore', 'pipe', 'inherit'] : 'inherit',
+    shell,
   });
 
   if (result.error) throw result.error;
@@ -28,10 +29,9 @@ function git(args, options) {
 }
 
 function npm(args, options) {
-  if (!npmCli || !existsSync(npmCli)) {
-    throw new Error('请通过 npm run release 执行此脚本。');
-  }
-  return run(process.execPath, [npmCli, ...args], options);
+  // npm_execpath points to pnpm when invoked by `pnpm run release`.
+  // Invoke npm itself so pack JSON and version/tag behavior stay consistent.
+  return run('npm', args, { ...options, shell: process.platform === 'win32' });
 }
 
 function nextVersion(current, type) {
@@ -68,6 +68,12 @@ async function chooseVersion(rl, current) {
 function ensureReleaseReady(packageInfo, version) {
   if (!existsSync(resolve(root, 'LICENSE')) || !packageInfo.license) {
     throw new Error('缺少 LICENSE 文件或 package.json 的 license 字段。');
+  }
+  if (!/^(?:@[a-z0-9._-]+\/)?[a-z0-9._-]+$/.test(packageInfo.name)) {
+    throw new Error('package.json 中的包名不符合发布脚本要求。');
+  }
+  if (packageInfo.publishConfig?.registry !== npmRegistry) {
+    throw new Error(`publishConfig.registry 必须是 ${npmRegistry}。`);
   }
   if (git(['branch', '--show-current'], { capture: true }) !== 'main') {
     throw new Error('请先切换到 main 分支。');
@@ -110,7 +116,7 @@ function verifyPackage(packageInfo, version) {
   console.log('\n检查 npm 官方 registry 中的版本…');
   const versions = JSON.parse(npm([
     'view', packageInfo.name, 'versions', '--json',
-    `--registry=${packageInfo.publishConfig?.registry ?? 'https://registry.npmjs.org/'}`,
+    `--registry=${npmRegistry}`,
   ], { capture: true }));
   if (versions.includes(version)) throw new Error(`${packageInfo.name}@${version} 已发布，不能重复发布。`);
 
@@ -169,7 +175,7 @@ async function main() {
     }
 
     startedVersion = version;
-    npm(['version', type, '--git-tag-version=true', '-m', 'chore: release v%s']);
+    npm(['version', type, '--git-tag-version=true']);
     if (JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8')).version !== version) {
       throw new Error(`版本更新结果与预期 ${version} 不一致，请检查本地仓库。`);
     }
