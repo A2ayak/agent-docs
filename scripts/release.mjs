@@ -96,7 +96,7 @@ function ensureReleaseReady(packageInfo, version) {
   if (tag.status === 0) throw new Error(`标签 v${version} 已存在。`);
 }
 
-async function commitPendingChanges(rl) {
+async function commitPendingChanges(rl, version) {
   const changes = git(['status', '--short', '--untracked-files=all'], { capture: true });
   if (!changes) return 'clean';
 
@@ -105,8 +105,9 @@ async function commitPendingChanges(rl) {
   const answer = (await rl.question('是否将以上全部改动提交到 main？输入 yes 确认：')).trim();
   if (answer !== 'yes') return 'cancelled';
 
-  const input = (await rl.question('提交说明 [chore: prepare release]：')).trim();
-  const message = input || 'chore: prepare release';
+  const defaultMessage = `chore: release v${version}`;
+  const input = (await rl.question(`提交说明 [${defaultMessage}]：`)).trim();
+  const message = input || defaultMessage;
   git(['add', '--all']);
   git(['commit', '-m', message]);
   return 'committed';
@@ -136,7 +137,7 @@ function verifyPackage(packageInfo, version) {
 
 async function main() {
   if (process.argv.includes('--help') || process.argv.includes('-h')) {
-    console.log('用法：npm run release\n交互选择 patch/minor/major，确认提交本地改动，再推送 main 和新标签以触发 GitHub Actions 发布 npm。');
+    console.log('用法：npm run release\n交互选择 patch/minor/major，确认本地改动，再创建一个包含版本更新的发布提交和标签，推送 main 与标签以触发 GitHub Actions 发布 npm。');
     return;
   }
   if (process.argv.length > 2) throw new Error('不支持额外参数；请运行 npm run release。');
@@ -156,7 +157,7 @@ async function main() {
     }
     const [type, version] = selection;
     ensureReleaseReady(packageInfo, version);
-    const commitResult = await commitPendingChanges(rl);
+    const commitResult = await commitPendingChanges(rl, version);
     if (commitResult === 'cancelled') {
       console.log('已取消发布，仓库未改变。');
       return;
@@ -164,7 +165,7 @@ async function main() {
     preparedCommit = commitResult === 'committed';
     verifyPackage(packageInfo, version);
 
-    console.log(`\n将执行：npm version ${type} → 推送 main → 推送 v${version}`);
+    console.log(`\n将执行：更新版本到 ${version} → 合并到发布提交 → 创建标签 v${version} → 推送 main 和标签`);
     console.log('推送标签会触发 GitHub Actions，自动发布到 npm。');
     const confirmation = (await rl.question(`输入 v${version} 确认发布，其他输入取消：`)).trim();
     if (confirmation !== `v${version}`) {
@@ -175,17 +176,24 @@ async function main() {
     }
 
     startedVersion = version;
-    npm(['version', type, '--git-tag-version=true']);
+    npm(['version', type, '--no-git-tag-version']);
     if (JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8')).version !== version) {
       throw new Error(`版本更新结果与预期 ${version} 不一致，请检查本地仓库。`);
     }
+    git(['add', '--all']);
+    if (preparedCommit) {
+      git(['commit', '--amend', '--no-edit']);
+    } else {
+      git(['commit', '-m', `chore: release v${version}`]);
+    }
+    git(['tag', '-a', `v${version}`, '-m', `v${version}`]);
     git(['push', 'origin', 'main']);
     git(['push', 'origin', `v${version}`]);
     console.log(`\n已推送 v${version}。请在 GitHub Actions 的 Publish to npm 中查看发布结果。`);
   } catch (error) {
     if (startedVersion) {
       console.error(`\n发布中止：${error.message}`);
-      console.error(`本地可能已生成版本提交和标签。请检查 git status 与 git tag；推送失败时可重试 git push origin main，再执行 git push origin v${startedVersion}。`);
+      console.error(`本地可能已更新版本、生成提交或标签。请检查 git status、git log 和 git tag；如果提交与标签已创建，推送失败时可重试 git push origin main，再执行 git push origin v${startedVersion}。`);
       process.exitCode = 1;
       return;
     }

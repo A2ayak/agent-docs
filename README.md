@@ -82,10 +82,10 @@ npm run release
 1. 选择 `patch`、`minor` 或 `major`。例如从 `0.2.1` 选择 `patch` 会得到 `0.2.2`。
 2. 检查当前分支是 `main`、远端 `main` 没有本地缺少的提交。若工作区有未提交的改动，列出文件并询问是否将这些改动全部提交；可以自行输入提交说明。
 3. 检查目标版本尚未发布，运行测试，并检查 npm 包包含 `LICENSE`。
-4. 显示将创建的版本和标签。只有输入完整版本标签（如 `v0.2.2`）确认后，才会用 `npm version` 创建版本提交和 Git 标签，依次推送 `main` 与该标签。已提交但尚未推送的本地改动也会随 `main` 一起推送。
+4. 显示将创建的版本和标签。只有输入完整版本标签（如 `v0.2.2`）确认后，才会更新版本号，并将版本更新合并进刚创建的本地提交；若原本没有未提交改动，则创建一条发布提交。随后为这条提交创建 Git 标签，依次推送 `main` 与标签。已提交但尚未推送的其他本地改动也会随 `main` 一起推送。
 5. 标签推送触发 [Publish to npm](.github/workflows/publish.yml)。在仓库的 **Actions** 页面查看日志；成功后可用 `npm view agent-docs-cli dist-tags --registry=https://registry.npmjs.org/` 核对 `latest`。
 
-发版命令需要本地交互式终端、Git 推送权限，以及已在 npm 上配置与本仓库匹配的 Trusted Publisher。确认自动提交前，请核对脚本列出的文件。若版本提交和标签已经在本地创建、但推送因网络问题失败，先检查 `git status` 和 `git tag`，再重试 `git push origin main` 与 `git push origin v<版本号>`；不要再次运行发版命令来重试同一版本。npm 中已经发布的版本不能用相同版本号重新上传。
+发版命令需要本地交互式终端、Git 推送权限，以及已在 npm 上配置与本仓库匹配的 Trusted Publisher。确认自动提交前，请核对脚本列出的文件。若发布提交和标签已经在本地创建、但推送因网络问题失败，先检查 `git status`、`git log` 和 `git tag`，再重试 `git push origin main` 与 `git push origin v<版本号>`；不要再次运行发版命令来重试同一版本。npm 中已经发布的版本不能用相同版本号重新上传。
 
 ## 目录结构与新增预设
 
