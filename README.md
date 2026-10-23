@@ -1,4 +1,4 @@
-# agent-docs
+# agent-docs-cli
 
 在已有项目中安装 `AGENTS.md` 和 `docs/` 开发规范。运行命令后选择一套预设，CLI 将该预设的文件复制到当前项目。当前内置 `default`。
 
@@ -67,7 +67,7 @@ CLI 会逐个标明新增、跳过或覆盖的文件。已有文件默认跳过�
 ## 目录结构与新增预设
 
 ```text
-agent-docs/
+agent-docs-cli/
 ├─ bin/
 │  └─ agent-docs.mjs         # 命令入口与交互选择
 ├─ src/
