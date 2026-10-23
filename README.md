@@ -11,9 +11,7 @@ cd ./my-project
 npx agent-docs-cli@latest init
 ```
 
-CLI 会列出可用预设，可输入编号或名称；直接回车选择第一项。选定后会显示每个文件的处理方式，并立即执行安装。非交互环境须使用 `--preset`。若希望固定模板版本，把 `@latest` 换成具体版本号。
-
-`agent-docs-cli` 是 npm 包名，`agent-docs` 是包内注册的命令名。npm 上的 `agent-docs` 包名已被占用，因此应使用 `npx agent-docs-cli@latest`。
+CLI 会列出可用预设，可输入编号或名称；直接回车选择第一项。选定后会显示每个文件的处理方式，并立即执行安装。非交互环境须使用 `--preset`。若希望固定模板版本，把 `@latest` 换成具体版本号
 
 ### `init` 执行流程
 
