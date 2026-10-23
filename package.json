@@ -1,6 +1,6 @@
 {
   "name": "agent-docs-cli",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "在现有项目中安装 AGENTS.md 和开发规范模板",
   "license": "MIT",
   "repository": {
